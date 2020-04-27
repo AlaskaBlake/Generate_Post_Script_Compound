@@ -72,6 +72,16 @@ std::shared_ptr<Shape> makeHorizontalShape(std::initializer_list<std::shared_ptr
 	return make_shared<HorizontalShape>(i);
 }
 
+void Compound::generatePostScript(std::ostream& os) const
+{
+	os << " gsave \n";
+	for (size_t i = 0; i < getShapes().size(); ++i) {
+		moveToPositionForShape(i, os);
+		getShapes()[i]->generatePostScript(os);
+	}
+	os << "grestore \n ";
+}
+
 Circle::Circle(double radius): _radius(radius){}
 
 double Circle::getHeight() const
@@ -298,12 +308,14 @@ double LayeredShape::getWidth() const
 	return maxWidth;
 }
 
-void LayeredShape::generatePostScript(std::ostream& os) const
+std::vector<std::shared_ptr<Shape>> LayeredShape::getShapes() const
 {
-	os << " gsave ";
-	for (const auto& shape : _shapes)
-		shape->generatePostScript(os);
-	os << " grestore \n";
+	return _shapes;
+}
+
+void LayeredShape::moveToPositionForShape(std::size_t i, std::ostream& os) const
+{
+	os << " 0 0 moveto";
 }
 
 VerticalShape::VerticalShape(initializer_list<shared_ptr<Shape>> i)
@@ -333,29 +345,36 @@ double VerticalShape::getWidth() const
 	return maxWidth;
 }
 
-void VerticalShape::generatePostScript(std::ostream& os) const
+std::vector<std::shared_ptr<Shape>> VerticalShape::getShapes() const
 {
-	os << " gsave ";
+	return _shapes;
+}
 
+void VerticalShape::moveToPositionForShape(std::size_t i, std::ostream& os) const
+{
 	vector<double> heights{};
 	double totalHeight = 0;
-	int numberOfShapes = 0;
+	int numberOfShapes = _shapes.size();
 
-	for (const auto shape : _shapes) {
-		double temp = shape->getHeight();
+	double temp = 0;
+	for (const auto& shape : _shapes) {
+		temp = shape->getHeight();
 		totalHeight += temp;
 		heights.push_back(temp);
-		++numberOfShapes;
 	}
 
-	os << " 0 " << totalHeight / 2.0 << " translate ";
-	for (int i = 0; i < numberOfShapes; ++i) {
-		os << "0 -" << heights[i] / 2.0 << " translate \n";
-		_shapes[i]->generatePostScript(os);
-		os << " 0 -" << heights[i] / 2.0 << " translate \n";
+	os << "0 " << totalHeight / 2.0 << " moveto ";
+	int totalMove = 0;
+	if (i > 0) {
+		for (size_t ii = 0; ii < i - 1; ++ii) {
+			os << " 0 -" << heights[ii] << " rmoveto \n";
+		}
+		os << " 0 -" << heights[i] / 2.0 << " rmoveto ";
 	}
-
-	os << " grestore \n";
+	else {
+		os << " 0 -" << heights[0] / 2.0 << " rmoveto ";
+	}
+	
 }
 
 HorizontalShape::HorizontalShape(initializer_list<shared_ptr<Shape>> i)
@@ -385,29 +404,32 @@ double HorizontalShape::getWidth() const
 	return totalWidth;
 }
 
-void HorizontalShape::generatePostScript(std::ostream& os) const
+std::vector<std::shared_ptr<Shape>> HorizontalShape::getShapes() const
 {
-	os << " gsave ";
-
-	vector<double> widths{};
-	double totalWidth = 0;
-	int numberOfShapes = 0;
-
-	for (const auto shape : _shapes) {
-		double temp = shape->getWidth();
-		totalWidth += temp;
-		widths.push_back(temp);
-		++numberOfShapes;
-	}
-
-	os << " " << totalWidth / 2.0 << " 0 translate ";
-	for (int i = 0; i < numberOfShapes; ++i) {
-		os << " -" << widths[i] / 2.0 << " 0 translate \n";
-		_shapes[i]->generatePostScript(os);
-		os << " -" << widths[i] / 2.0 << " 0 translate \n";
-	}
-
-	os << " grestore \n";
+	return _shapes;
 }
 
+void HorizontalShape::moveToPositionForShape(std::size_t i, std::ostream& os) const {
+	vector<double> widths{};
+	double totalWidth = 0;
+	int numberOfShapes = _shapes.size();
 
+	double temp = 0;
+	for (const auto& shape : _shapes) {
+		temp = shape->getHeight();
+		totalWidth += temp;
+		widths.push_back(temp);
+	}
+
+	os << "0 " << totalWidth / 2.0 << " moveto ";
+	int totalMove = 0;
+	if (i > 0) {
+		for (size_t ii = 0; ii < i - 1; ++ii) {
+			os << " 0 -" << widths[ii] << " rmoveto \n";
+		}
+		os << " 0 -" << widths[i] / 2.0 << " rmoveto ";
+	}
+	else {
+		os << " 0 -" << widths[0] / 2.0 << " rmoveto ";
+	}
+}

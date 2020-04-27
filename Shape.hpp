@@ -24,6 +24,17 @@ public:
     virtual void generatePostScript(std::ostream& os) const = 0;
 };
 
+class Compound: public Shape {
+public:
+    virtual ~Compound() = default;
+    virtual double getHeight() const = 0;
+    virtual double getWidth() const = 0;
+    virtual std::vector<std::shared_ptr<Shape>> getShapes() const = 0;
+    virtual void moveToPositionForShape(std::size_t i, std::ostream& os) const = 0;
+    void generatePostScript(std::ostream& os) const;
+
+};
+
 std::shared_ptr<Shape> makeCircle(double radius);
 std::shared_ptr<Shape> makePolygon(int numSides, double length);
 std::shared_ptr<Shape> makeRectangle(double width, double height);
@@ -124,32 +135,35 @@ private:
     double _sy;
 };
 
-class LayeredShape : public Shape {
+class LayeredShape : public Compound {
 public:
     LayeredShape(std::initializer_list<std::shared_ptr<Shape>> i);
     double getHeight() const override;
     double getWidth() const override;
-    void generatePostScript(std::ostream& os) const override;
+    void moveToPositionForShape(std::size_t i, std::ostream& os) const override;
+    std::vector<std::shared_ptr<Shape>> getShapes() const override;
 private:
     std::vector<std::shared_ptr<Shape>> _shapes;
 };
 
-class VerticalShape : public Shape {
+class VerticalShape : public Compound {
 public:
     VerticalShape(std::initializer_list<std::shared_ptr<Shape>> i);
     double getHeight() const override;
     double getWidth() const override;
-    void generatePostScript(std::ostream& os) const override;
+    void moveToPositionForShape(std::size_t i, std::ostream& os) const override;
+    std::vector<std::shared_ptr<Shape>> getShapes() const override;
 private:
     std::vector<std::shared_ptr<Shape>> _shapes;
 };
 
-class HorizontalShape : public Shape {
+class HorizontalShape : public Compound {
 public:
     HorizontalShape(std::initializer_list<std::shared_ptr<Shape>> i);
     double getHeight() const override;
     double getWidth() const override;
-    void generatePostScript(std::ostream& os) const override;
+    void moveToPositionForShape(std::size_t i, std::ostream& os) const override;
+    std::vector<std::shared_ptr<Shape>> getShapes() const override;
 private:
     std::vector<std::shared_ptr<Shape>> _shapes;
 };
