@@ -416,7 +416,7 @@ void HorizontalShape::moveToPositionForShape(std::size_t i, std::ostream& os) co
 
 	double temp = 0;
 	for (const auto& shape : _shapes) {
-		temp = shape->getHeight();
+		temp = shape->getWidth();
 		totalWidth += temp;
 		widths.push_back(temp);
 	}
